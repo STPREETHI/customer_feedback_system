@@ -1,179 +1,78 @@
-# Requirements.txt
-streamlit>=1.28.0
-pandas>=1.5.0
-numpy>=1.24.0
-plotly>=5.15.0
-scikit-learn>=1.3.0
-nltk>=3.8
-textblob>=0.17.1
+End-to-End Customer Feedback Analysis System
+This project is a complete, production-ready web application for analyzing, categorizing, and generating insights from customer feedback. It leverages a modern stack of open-source NLP and GenAI tools to provide a comprehensive dashboard for product analysis, comparison, and AI-powered recommendations.
 
-# Setup Instructions
+🔹 Core Features
+Sentiment Analysis: Automatically classifies reviews into Positive or Negative categories.
 
-## Installation
+AI-Powered Summarization: Uses a Retrieval-Augmented Generation (RAG) pipeline with a T5 model to generate concise, accurate summaries of product feedback.
 
-1. Create a virtual environment:
-```bash
-python -m venv feedback_system
-source feedback_system/bin/activate  # On Windows: feedback_system\Scripts\activate
-```
+Interactive Dashboard: A sleek, modern UI built with HTML, CSS, and Chart.js to visualize sentiment distribution and other key metrics.
 
-2. Install dependencies:
-```bash
+Product Comparison: A dedicated view to compare two products side-by-side, complete with an AI-generated comparative analysis.
+
+Suggestion Bot: An intelligent chat assistant that uses the RAG pipeline to answer user queries (e.g., "Which product is more durable?") based on actual review data.
+
+Persistent Storage: Uses SQLite to store all processed reviews and analysis results, ensuring fast load times and data persistence.
+
+🔹 Technical Stack
+Backend: Python, Flask
+
+Frontend: HTML, CSS, JavaScript (with Chart.js)
+
+Database: SQLite
+
+AI & NLP:
+
+sentence-transformers: For generating high-quality text embeddings.
+
+faiss-cpu: For efficient similarity search on embeddings.
+
+transformers: For sentiment analysis and generative AI (T5).
+
+torch: The deep learning framework.
+
+nltk: For text preprocessing.
+
+🔹 Setup and Installation
+Prerequisites: Python 3.9+ and pip.
+
+Set Up a Virtual Environment (Highly Recommended):
+
+python -m venv venv
+source venv/bin/activate  # On Windows, use `venv\Scripts\activate`
+
+Install Dependencies:
+Create a requirements.txt file with the contents from this project and run:
+
 pip install -r requirements.txt
-```
 
-3. Create the project structure:
-```
-feedback_system/
-├── app.py                    # Main Streamlit application
-├── preprocessing.py          # Text preprocessing module
-├── nlp_models.py            # NLP analysis models
-├── embeddings.py            # Embeddings and similarity search
-├── rag_summarization.py     # RAG-based summarization
-├── requirements.txt         # Dependencies
-├── data/                    # Data directory
-│   └── sample_feedback.csv  # Sample dataset
-└── README.md               # Documentation
-```
+Download NLTK Data:
+Run the following command in your terminal. The preprocessing.py script will handle the download if needed.
 
-## Running the Application
+python -c "import nltk; nltk.download('punkt'); nltk.download('stopwords')"
 
-1. Navigate to the project directory:
-```bash
-cd feedback_system
-```
+Get the Dataset:
 
-2. Run the Streamlit app:
-```bash
-streamlit run app.py
-```
+Download the Amazon Review Dataset from Kaggle: https://www.kaggle.com/datasets/bittlingmayer/amazonreviews
 
-3. Open your browser to http://localhost:8501
+From the downloaded archive, take either train.ft.txt.bz2 or test.ft.txt.bz2.
 
-## Features
+Rename it to amazon_reviews.csv and place it inside the data/ folder.
 
-### 🎯 Main Features
-- **Real-time Feedback Analysis**: Process customer feedback with AI models
-- **Multi-dimensional Analysis**: Sentiment, topics, aspects, and emotions
-- **Interactive Dashboard**: Modern, responsive UI with visualizations
-- **Actionable Insights**: AI-generated recommendations and summaries
-- **Semantic Search**: Find similar feedback using embeddings
-- **Theme Detection**: Automatically identify emerging patterns
+🔹 Running the Application
+First-Time Setup (Process Data):
+This is a crucial one-time step. Run the embeddings.py script from the main project folder. It will read the raw data, perform all cleaning and AI analysis, and create the feedback.db database and review_index.faiss search file.
 
-### 📊 Analytics Capabilities
-- Sentiment trend analysis over time
-- Topic distribution and popularity
-- Aspect-based sentiment analysis
-- Cluster analysis for theme identification
-- Similarity search for related feedback
+python backend/embeddings.py
 
-### 🤖 AI Components
-- **Sentiment Analysis**: Lexicon-based with confidence scoring
-- **Topic Classification**: Multi-label keyword-based classification
-- **Aspect Analysis**: Detect sentiment for specific product aspects
-- **Embedding Generation**: TF-IDF based text embeddings
-- **RAG Summarization**: Template-based insight generation
+Note: This can take several minutes depending on your computer.
 
-### 📋 Data Processing
-- Comprehensive text preprocessing
-- Language detection
-- Typo correction
-- Special character handling
-- Batch processing capabilities
+Start the Backend Server:
+Run the Flask API server from the main project directory.
 
-## Customization
+flask --app backend/app run
 
-### Adding New Topics
-Edit the `topic_keywords` dictionary in `nlp_models.py`:
-```python
-self.topic_keywords = {
-    'new_topic': {
-        'keyword1', 'keyword2', 'keyword3'
-    }
-}
-```
+The server will start, typically on http://127.0.0.1:5000.
 
-### Modifying Sentiment Analysis
-Update word lists in `SentimentAnalyzer` class:
-```python
-self.positive_words.update(['new_positive_word'])
-self.negative_words.update(['new_negative_word'])
-```
-
-### Custom Data Sources
-Upload CSV files with these required columns:
-- `feedback`: The feedback text
-- `timestamp`: Date/time of feedback
-- `source`: Source of feedback (optional)
-- `customer_id`: Customer identifier (optional)
-
-## Production Deployment
-
-### Recommended Upgrades for Production:
-
-1. **Replace Mock Models**:
-   - Use `transformers` library with `distilbert-base-uncased`
-   - Implement `sentence-transformers` for embeddings
-   - Add `flan-t5-small` for text generation
-   - Use real FAISS for vector search
-
-2. **Database Integration**:
-   - PostgreSQL or MongoDB for feedback storage
-   - Redis for caching embeddings
-   - Vector databases like Pinecone or Weaviate
-
-3. **Scalability**:
-   - Docker containerization
-   - Kubernetes deployment
-   - Load balancing for multiple instances
-   - Background task processing with Celery
-
-4. **Security**:
-   - User authentication
-   - API key management
-   - Data encryption
-   - Rate limiting
-
-5. **Monitoring**:
-   - Application performance monitoring
-   - Model performance tracking
-   - Error logging and alerting
-   - Usage analytics
-
-## Sample Data Format
-
-```csv
-id,timestamp,feedback,source,customer_id
-1,2024-01-15,"App crashes frequently",App Store,CUST001
-2,2024-01-16,"Love the new dark mode!",In-App,CUST002
-3,2024-01-17,"Support response was slow",Email,CUST003
-```
-
-## API Integration
-
-### REST API Endpoints (Future Enhancement):
-```
-POST /api/feedback/analyze
-GET /api/feedback/trends
-GET /api/feedback/summary
-POST /api/feedback/search
-```
-
-## Performance Optimization
-
-- Implement caching for processed results
-- Use batch processing for large datasets
-- Optimize database queries
-- Implement async processing for real-time analysis
-
-## Troubleshooting
-
-### Common Issues:
-
-1. **ImportError**: Install missing dependencies with pip
-2. **Memory Issues**: Reduce batch size for large datasets
-3. **Slow Performance**: Enable caching and use smaller models
-4. **Display Issues**: Clear browser cache and restart Streamlit
-
-### Support:
-For issues or questions, check the documentation or create an issue in the project repository.
+Launch the Frontend:
+Open the frontend/index.html file in your web browser. The application will automatically connect to the running backend.

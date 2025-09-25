@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compare Products - Feedback Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Feedback Analytics</h1>
+            <nav>
+                <a href="index.html">Dashboard</a>
+                <a href="compare.html" class="active">Compare Products</a>
+            </nav>
+        </header>
+
+        <main>
+            <div class="comparison-setup-panel">
+                <h2>Live Product Comparison</h2>
+                <p class="subtitle">Paste two **Flipkart** product URLs below to compare them side-by-side based on customer reviews.</p>
+                <div class="comparison-inputs">
+                    <div class="url-input-group">
+                        <input type="text" id="productUrl1" placeholder="Paste Flipkart Product URL 1...">
+                    </div>
+                    <div class="vs-divider">VS</div>
+                    <div class="url-input-group">
+                         <input type="text" id="productUrl2" placeholder="Paste Flipkart Product URL 2...">
+                    </div>
+                </div>
+                <button id="compareBtn">Compare Products</button>
+            </div>
+
+            <div id="loadingSpinnerCompare" class="spinner-container hidden">
+                <div class="spinner"></div>
+                <p>Scraping and analyzing both products... this may take a while.</p>
+            </div>
+
+            <div id="comparisonResult" class="comparison-result-container hidden">
+                <!-- Comparison results will be injected here -->
+            </div>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
+
