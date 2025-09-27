@@ -3,18 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Universal Product Intelligence</title>
+    <title>Universal Product Intelligence - AI-Powered Product Analysis</title>
+    <meta name="description" content="Get instant AI-powered analysis of any product from real user reviews across the internet">
     <link rel="stylesheet" href="style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧠</text></svg>">
 </head>
 <body>
     <div class="container">
         <header>
             <div class="logo">
                 <i data-lucide="brain-circuit"></i>
-                <h1>Product Intelligence</h1>
+                <div>
+                    <h1>Product Intelligence</h1>
+                    <small style="color: var(--text-muted); font-weight: 400;">AI-Powered Analysis</small>
+                </div>
             </div>
             <nav>
                 <a href="index.html" class="active">Dashboard</a>
@@ -23,29 +28,86 @@
         </header>
 
         <main>
+            <!-- Hero Section -->
+            <div class="hero-section">
+                <div class="hero-content">
+                    <h2>Analyze Any Product with AI</h2>
+                    <p>Get instant insights from real customer reviews across the internet. Make informed purchasing decisions with our advanced AI analysis.</p>
+                </div>
+            </div>
+
+            <!-- Input Panel -->
             <div class="input-panel glass-effect">
                 <div class="panel-header">
                     <i data-lucide="search"></i>
-                    <h2>Analyze any Product from the Web</h2>
+                    <h3>Search & Analyze Products</h3>
+                    <p style="margin: 0; color: var(--text-muted); font-size: 0.9rem;">Enter any product name or paste a product URL</p>
                 </div>
                 <div class="input-group">
-                    <input type="text" id="product-query-input" placeholder="Enter Product Name or URL (e.g., iPhone 15 Pro)">
-                    <button id="analyze-btn">
+                    <input 
+                        type="text" 
+                        id="product-query-input" 
+                        placeholder="e.g., iPhone 15 Pro, Sony WH-1000XM4, MacBook Pro M3..."
+                        autocomplete="off"
+                        spellcheck="false"
+                    >
+                    <button id="analyze-btn" title="Analyze Product">
                         <i data-lucide="arrow-right"></i>
                     </button>
                 </div>
+                
+                <!-- Quick Examples -->
+                <div class="quick-examples">
+                    <span style="color: var(--text-muted); font-size: 0.8rem; margin-right: 1rem;">Try:</span>
+                    <button class="example-btn" data-example="iPhone 15 Pro">iPhone 15 Pro</button>
+                    <button class="example-btn" data-example="Sony WH-1000XM4">Sony WH-1000XM4</button>
+                    <button class="example-btn" data-example="Tesla Model 3">Tesla Model 3</button>
+                </div>
             </div>
             
+            <!-- Results Container -->
             <div id="results-container" class="results-container hidden">
-                <!-- All futuristic UI components will be rendered here by script.js -->
+                <!-- Analysis results will be rendered here by script.js -->
             </div>
         </main>
+
+        <!-- Footer -->
+        <footer style="margin-top: 4rem; padding: 2rem 0; border-top: 1px solid var(--border-color); text-align: center; color: var(--text-muted);">
+            <p>&copy; 2024 Universal Product Intelligence Engine. Powered by AI.</p>
+            <p style="font-size: 0.8rem; margin-top: 0.5rem;">
+                Data sourced from public reviews across the internet. Results are AI-generated insights.
+            </p>
+        </footer>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/wordcloud2.js/1.1.0/wordcloud2.min.js"></script>
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/wordcloud2.js/1.2.2/wordcloud2.min.js"></script>
     <script src="script.js"></script>
+    
+    <script>
+        // Add example button functionality
+        document.addEventListener('DOMContentLoaded', () => {
+            const exampleButtons = document.querySelectorAll('.example-btn');
+            const inputField = document.getElementById('product-query-input');
+            
+            exampleButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const example = btn.getAttribute('data-example');
+                    if (inputField && example) {
+                        inputField.value = example;
+                        inputField.focus();
+                        
+                        // Add subtle animation
+                        btn.style.transform = 'scale(0.95)';
+                        setTimeout(() => {
+                            btn.style.transform = 'scale(1)';
+                        }, 150);
+                    }
+                });
+            });
+        });
+    </script>
 </body>
 </html>
-

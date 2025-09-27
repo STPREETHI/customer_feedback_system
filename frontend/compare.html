@@ -3,18 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Compare Products - Universal Intelligence</title>
+    <title>Compare Products - Universal Product Intelligence</title>
+    <meta name="description" content="Compare any two products side-by-side with AI-powered analysis from real user reviews">
     <link rel="stylesheet" href="style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧠</text></svg>">
 </head>
 <body>
     <div class="container">
         <header>
-             <div class="logo">
+            <div class="logo">
                 <i data-lucide="brain-circuit"></i>
-                <h1>Product Intelligence</h1>
+                <div>
+                    <h1>Product Intelligence</h1>
+                    <small style="color: var(--text-muted); font-weight: 400;">AI-Powered Analysis</small>
+                </div>
             </div>
             <nav>
                 <a href="index.html">Dashboard</a>
@@ -23,28 +28,116 @@
         </header>
 
         <main>
+            <!-- Hero Section -->
+            <div class="hero-section">
+                <div class="hero-content">
+                    <h2>Compare Products Side-by-Side</h2>
+                    <p>Get detailed AI-powered comparisons between any two products based on real customer reviews and feedback.</p>
+                </div>
+            </div>
+
+            <!-- Input Panel -->
             <div class="input-panel glass-effect">
-                 <div class="panel-header">
+                <div class="panel-header">
                     <i data-lucide="git-compare-arrows"></i>
-                    <h2>Compare Two Products</h2>
+                    <h3>Product Comparison</h3>
+                    <p style="margin: 0; color: var(--text-muted); font-size: 0.9rem;">Enter two products to compare</p>
                 </div>
+                
                 <div class="comparison-input-grid">
-                    <input type="text" id="compare-query1-input" placeholder="Product 1 (e.g., Samsung Galaxy S24)">
-                    <input type="text" id="compare-query2-input" placeholder="Product 2 (e.g., Google Pixel 8)">
+                    <div class="input-wrapper">
+                        <label for="compare-query1-input" style="display: block; margin-bottom: 0.5rem; color: var(--text-secondary); font-size: 0.9rem;">Product 1</label>
+                        <input 
+                            type="text" 
+                            id="compare-query1-input" 
+                            placeholder="e.g., iPhone 15 Pro"
+                            autocomplete="off"
+                            spellcheck="false"
+                        >
+                    </div>
+                    <div class="input-wrapper">
+                        <label for="compare-query2-input" style="display: block; margin-bottom: 0.5rem; color: var(--text-secondary); font-size: 0.9rem;">Product 2</label>
+                        <input 
+                            type="text" 
+                            id="compare-query2-input" 
+                            placeholder="e.g., Samsung Galaxy S24"
+                            autocomplete="off"
+                            spellcheck="false"
+                        >
+                    </div>
                 </div>
-                 <button id="compare-btn" class="compare-button">
+                
+                <button id="compare-btn" class="compare-button">
+                    <i data-lucide="zap" style="margin-right: 0.5rem;"></i>
                     Generate Comparison
                 </button>
+                
+                <!-- Quick Comparison Examples -->
+                <div class="quick-examples" style="justify-content: center;">
+                    <span style="color: var(--text-muted); font-size: 0.8rem; margin-right: 1rem;">Popular Comparisons:</span>
+                    <button class="example-btn" data-example1="iPhone 15 Pro" data-example2="Samsung Galaxy S24">Phone Battle</button>
+                    <button class="example-btn" data-example1="MacBook Pro M3" data-example2="Dell XPS 13">Laptops</button>
+                    <button class="example-btn" data-example1="Tesla Model 3" data-example2="BMW i4">Electric Cars</button>
+                </div>
             </div>
             
+            <!-- Results Container -->
             <div id="comparison-results-container" class="results-container hidden">
-                <!-- The final, beautiful comparison will be rendered here -->
+                <!-- Comparison results will be rendered here by script.js -->
             </div>
         </main>
+
+        <!-- Footer -->
+        <footer style="margin-top: 4rem; padding: 2rem 0; border-top: 1px solid var(--border-color); text-align: center; color: var(--text-muted);">
+            <p>&copy; 2024 Universal Product Intelligence Engine. Powered by AI.</p>
+            <p style="font-size: 0.8rem; margin-top: 0.5rem;">
+                Comparison data sourced from public reviews across the internet. Results are AI-generated insights.
+            </p>
+        </footer>
     </div>
 
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Scripts -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
     <script src="script.js"></script>
+    
+    <script>
+        // Add comparison example button functionality
+        document.addEventListener('DOMContentLoaded', () => {
+            const exampleButtons = document.querySelectorAll('.example-btn');
+            const input1 = document.getElementById('compare-query1-input');
+            const input2 = document.getElementById('compare-query2-input');
+            
+            exampleButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const example1 = btn.getAttribute('data-example1');
+                    const example2 = btn.getAttribute('data-example2');
+                    
+                    if (input1 && input2 && example1 && example2) {
+                        input1.value = example1;
+                        input2.value = example2;
+                        input2.focus();
+                        
+                        // Add subtle animation
+                        btn.style.transform = 'scale(0.95)';
+                        setTimeout(() => {
+                            btn.style.transform = 'scale(1)';
+                        }, 150);
+                    }
+                });
+            });
+            
+            // Add Enter key support for comparison inputs
+            [input1, input2].forEach(input => {
+                if (input) {
+                    input.addEventListener('keypress', (e) => {
+                        if (e.key === 'Enter') {
+                            const compareBtn = document.getElementById('compare-btn');
+                            if (compareBtn) compareBtn.click();
+                        }
+                    });
+                }
+            });
+        });
+    </script>
 </body>
 </html>
-
