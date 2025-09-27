@@ -1,0 +1,17 @@
+# Python cache
+__pycache__/
+*.pyc
+
+# Virtual environments
+venv/
+.env
+
+# Data & large files
+*.pkl
+*.h5
+*.csv
+*.json
+*.db
+
+# Logs
+*.log

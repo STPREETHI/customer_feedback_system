@@ -1,64 +1,41 @@
 import sqlite3
 import os
 
-DB_PATH = os.path.join(os.path.dirname(__file__), 'feedback.db')
-
-def get_db_connection():
+def get_db_connection(db_path):
     """Establishes a connection to the SQLite database."""
-    conn = None
     try:
-        # check_same_thread=False is needed for Flask's multi-threaded environment
-        conn = sqlite3.connect(DB_PATH, check_same_thread=False)
-        # Allows accessing columns by name (e.g., row['product_id'])
-        conn.row_factory = sqlite3.Row 
+        conn = sqlite3.connect(db_path)
+        conn.row_factory = sqlite3.Row
+        return conn
     except sqlite3.Error as e:
         print(f"Database connection error: {e}")
-    return conn
+        return None
 
-def setup_database():
-    """Creates the feedback table if it doesn't already exist."""
-    conn = get_db_connection()
-    if conn is None:
-        print("CRITICAL: Could not create database connection. Table setup failed.")
-        return
+def setup_database(conn):
+    """Creates the feedback table if it doesn't exist."""
     try:
         cursor = conn.cursor()
-        # Drop the table if it exists to ensure a fresh start during setup
-        cursor.execute("DROP TABLE IF EXISTS feedback")
-        cursor.execute('''
-            CREATE TABLE feedback (
-                id INTEGER PRIMARY KEY,
-                product_id TEXT NOT NULL,
-                review_text TEXT NOT NULL,
-                cleaned_text TEXT,
-                sentiment TEXT,
-                sentiment_score REAL
-            )
-        ''')
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS feedback (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            review_text TEXT NOT NULL,
+            sentiment TEXT,
+            product_id TEXT
+        );
+        """)
         conn.commit()
-        print("Database table 'feedback' created successfully.")
     except sqlite3.Error as e:
         print(f"Database setup error: {e}")
-    finally:
-        if conn:
-            conn.close()
 
-def insert_feedback_batch(feedback_data_list):
-    """Inserts a batch of review records into the feedback table."""
-    conn = get_db_connection()
-    if conn is None:
-        print("CRITICAL: Could not create database connection. Insertion failed.")
-        return
-        
-    sql = ''' INSERT INTO feedback(id, product_id, review_text, cleaned_text, sentiment, sentiment_score)
-              VALUES(?,?,?,?,?,?) '''
+def insert_feedback(conn, feedback_data):
+    """Inserts a list of feedback data into the database."""
     try:
         cursor = conn.cursor()
-        cursor.executemany(sql, feedback_data_list)
+        cursor.executemany("""
+        INSERT INTO feedback (review_text, sentiment, product_id)
+        VALUES (:review_text, :sentiment, :product_id);
+        """, feedback_data)
         conn.commit()
     except sqlite3.Error as e:
-        print(f"Failed to insert feedback batch: {e}")
-    finally:
-        if conn:
-            conn.close()
+        print(f"Database insert error: {e}")
 

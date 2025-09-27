@@ -6,7 +6,7 @@ faiss-cpu
 transformers==4.41.2
 tokenizers==0.19.1
 torch
-nltk
+nltk # <-- ADDED: The core NLP toolkit
 accelerate
 protobuf==4.25.3
 huggingface-hub>=0.23.0
@@ -14,3 +14,4 @@ beautifulsoup4
 requests
 selenium
 webdriver-manager
+googlesearch-python

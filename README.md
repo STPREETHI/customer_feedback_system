@@ -1,78 +1,44 @@
-End-to-End Customer Feedback Analysis System
-This project is a complete, production-ready web application for analyzing, categorizing, and generating insights from customer feedback. It leverages a modern stack of open-source NLP and GenAI tools to provide a comprehensive dashboard for product analysis, comparison, and AI-powered recommendations.
+Universal Product Intelligence Engine
+This is a complete, end-to-end system for analyzing customer feedback and product reputation from the general internet. Instead of relying on a single, fragile e-commerce site scraper, this application performs a general web search for any given product, aggregates reviews and opinions from multiple sources, and uses a powerful AI pipeline to deliver a comprehensive analysis.
 
-🔹 Core Features
-Sentiment Analysis: Automatically classifies reviews into Positive or Negative categories.
+This final version features a dynamic, NLP-based topic extraction engine that can understand and analyze reviews for any product category, from electronics to carrots.
 
-AI-Powered Summarization: Uses a Retrieval-Augmented Generation (RAG) pipeline with a T5 model to generate concise, accurate summaries of product feedback.
+🚀 Final Setup and Running Instructions
+Follow these steps to get the application running.
 
-Interactive Dashboard: A sleek, modern UI built with HTML, CSS, and Chart.js to visualize sentiment distribution and other key metrics.
+Step 1: Install All Dependencies
+First, you need to install all the required Python libraries, including the new NLP toolkit.
 
-Product Comparison: A dedicated view to compare two products side-by-side, complete with an AI-generated comparative analysis.
+Open your terminal in the main project folder.
 
-Suggestion Bot: An intelligent chat assistant that uses the RAG pipeline to answer user queries (e.g., "Which product is more durable?") based on actual review data.
-
-Persistent Storage: Uses SQLite to store all processed reviews and analysis results, ensuring fast load times and data persistence.
-
-🔹 Technical Stack
-Backend: Python, Flask
-
-Frontend: HTML, CSS, JavaScript (with Chart.js)
-
-Database: SQLite
-
-AI & NLP:
-
-sentence-transformers: For generating high-quality text embeddings.
-
-faiss-cpu: For efficient similarity search on embeddings.
-
-transformers: For sentiment analysis and generative AI (T5).
-
-torch: The deep learning framework.
-
-nltk: For text preprocessing.
-
-🔹 Setup and Installation
-Prerequisites: Python 3.9+ and pip.
-
-Set Up a Virtual Environment (Highly Recommended):
-
-python -m venv venv
-source venv/bin/activate  # On Windows, use `venv\Scripts\activate`
-
-Install Dependencies:
-Create a requirements.txt file with the contents from this project and run:
+Run this command:
 
 pip install -r requirements.txt
 
-Download NLTK Data:
-Run the following command in your terminal. The preprocessing.py script will handle the download if needed.
+Step 2: Download NLP Data (New, One-Time Step)
+Our new, smarter AI needs some data from the NLTK library to understand grammar. You only need to do this once.
 
-python -c "import nltk; nltk.download('punkt'); nltk.download('stopwords')"
+Open your terminal and start the Python interpreter by typing python.
 
-Get the Dataset:
+Run the following two commands inside the Python interpreter:
 
-Download the Amazon Review Dataset from Kaggle: https://www.kaggle.com/datasets/bittlingmayer/amazonreviews
+import nltk
+nltk.download('punkt')
+nltk.download('averaged_perceptron_tagger')
+nltk.download('stopwords')
 
-From the downloaded archive, take either train.ft.txt.bz2 or test.ft.txt.bz2.
+A small window might pop up. Once the downloads are complete, you can close it and type exit() to leave the Python interpreter.
 
-Rename it to amazon_reviews.csv and place it inside the data/ folder.
+Step 3: Run the Local Data Setup (Optional but Recommended)
+This step analyzes your local amazon_reviews.csv file to power the local dataset features and the suggestion bot.
 
-🔹 Running the Application
-First-Time Setup (Process Data):
-This is a crucial one-time step. Run the embeddings.py script from the main project folder. It will read the raw data, perform all cleaning and AI analysis, and create the feedback.db database and review_index.faiss search file.
+In your terminal, from the main project folder, run:
 
 python backend/embeddings.py
 
-Note: This can take several minutes depending on your computer.
+Step 4: Start the Backend Server
+This starts the main "brain" of your application.
 
-Start the Backend Server:
-Run the Flask API server from the main project directory.
+In the same terminal, run:
 
 flask --app backend/app run
-
-The server will start, typically on http://127.0.0.1:5000.
-
-Launch the Frontend:
-Open the frontend/index.html file in your web browser. The application will automatically connect to the running backend.

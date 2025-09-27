@@ -3,99 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Customer Feedback Dashboard</title>
+    <title>Universal Product Intelligence</title>
     <link rel="stylesheet" href="style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
     <div class="container">
         <header>
             <div class="logo">
-                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>
-                <h1>Feedback Analytics</h1>
+                <i data-lucide="brain-circuit"></i>
+                <h1>Product Intelligence</h1>
             </div>
             <nav>
                 <a href="index.html" class="active">Dashboard</a>
-                <a href="compare.html">Compare Products</a>
+                <a href="compare.html">Compare</a>
             </nav>
         </header>
 
         <main>
-            <div class="live-analysis-panel card">
-                <div class="card-header">
-                    <i data-lucide="search-check"></i>
-                    <h2>Analyze a Live Product URL</h2>
+            <div class="input-panel glass-effect">
+                <div class="panel-header">
+                    <i data-lucide="search"></i>
+                    <h2>Analyze any Product from the Web</h2>
                 </div>
-                <p class="subtitle">Paste a Flipkart product link below to get an instant verdict based on its latest reviews.</p>
-                <div class="url-input-group">
-                    <input type="text" id="productUrlInput" placeholder="https://www.flipkart.com/...">
-                    <button id="analyzeUrlBtn">
-                        <i data-lucide="bar-chart-2"></i>
-                        <span>Analyze</span>
+                <div class="input-group">
+                    <input type="text" id="product-query-input" placeholder="Enter Product Name or URL (e.g., iPhone 15 Pro)">
+                    <button id="analyze-btn">
+                        <i data-lucide="arrow-right"></i>
                     </button>
                 </div>
-                <div id="loadingSpinner" class="spinner-container hidden">
-                    <div class="spinner"></div>
-                    <p>Controlling browser to scrape reviews... this may take a moment.</p>
-                </div>
-                <div id="liveAnalysisResult" class="result-container hidden">
-                    <!-- Results will be injected here -->
-                </div>
             </div>
-
-            <div class="dashboard-grid">
-                <div class="product-list-panel card">
-                    <div class="card-header">
-                        <i data-lucide="list"></i>
-                        <h3>Local Dataset Products</h3>
-                    </div>
-                    <div id="productList" class="product-list">
-                        <!-- Product list will be populated here -->
-                    </div>
-                </div>
-
-                <div class="product-details-panel card">
-                    <div id="productDetails" class="details-view">
-                        <div class="placeholder-content">
-                             <i data-lucide="mouse-pointer-click"></i>
-                            <p class="placeholder-text">Select a product from the list to see its detailed analysis.</p>
-                        </div>
-                    </div>
-                </div>
+            
+            <div id="results-container" class="results-container hidden">
+                <!-- All futuristic UI components will be rendered here by script.js -->
             </div>
         </main>
     </div>
 
-    <!-- Suggestion Bot -->
-    <div id="suggestionBot">
-        <div id="botHeader" class="bot-header">
-            <span>Suggestion Bot</span>
-            <span id="closeBot" class="close-btn">&times;</span>
-        </div>
-        <div id="botBody" class="bot-body">
-            <div class="message bot-message">
-                <p>Hi! Ask me which product is best for a feature (e.g., "best for battery life") or paste a Flipkart URL for a pros and cons list.</p>
-            </div>
-        </div>
-        <div class="bot-footer">
-            <input type="text" id="botInput" placeholder="Ask a question or paste a URL...">
-            <button id="botSendBtn">
-                 <i data-lucide="send"></i>
-            </button>
-        </div>
-    </div>
-    <div id="botToggle" class="bot-toggle-button">
-        <i data-lucide="message-circle"></i>
-        <i data-lucide="x" class="hidden"></i>
-    </div>
-    
-    <script>
-      lucide.createIcons();
-    </script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/wordcloud2.js/1.1.0/wordcloud2.min.js"></script>
     <script src="script.js"></script>
 </body>
 </html>

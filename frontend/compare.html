@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Compare Products - Feedback Dashboard</title>
+    <title>Compare Products - Universal Intelligence</title>
     <link rel="stylesheet" href="style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,40 +12,38 @@
 <body>
     <div class="container">
         <header>
-            <h1>Feedback Analytics</h1>
+             <div class="logo">
+                <i data-lucide="brain-circuit"></i>
+                <h1>Product Intelligence</h1>
+            </div>
             <nav>
                 <a href="index.html">Dashboard</a>
-                <a href="compare.html" class="active">Compare Products</a>
+                <a href="compare.html" class="active">Compare</a>
             </nav>
         </header>
 
         <main>
-            <div class="comparison-setup-panel">
-                <h2>Live Product Comparison</h2>
-                <p class="subtitle">Paste two **Flipkart** product URLs below to compare them side-by-side based on customer reviews.</p>
-                <div class="comparison-inputs">
-                    <div class="url-input-group">
-                        <input type="text" id="productUrl1" placeholder="Paste Flipkart Product URL 1...">
-                    </div>
-                    <div class="vs-divider">VS</div>
-                    <div class="url-input-group">
-                         <input type="text" id="productUrl2" placeholder="Paste Flipkart Product URL 2...">
-                    </div>
+            <div class="input-panel glass-effect">
+                 <div class="panel-header">
+                    <i data-lucide="git-compare-arrows"></i>
+                    <h2>Compare Two Products</h2>
                 </div>
-                <button id="compareBtn">Compare Products</button>
+                <div class="comparison-input-grid">
+                    <input type="text" id="compare-query1-input" placeholder="Product 1 (e.g., Samsung Galaxy S24)">
+                    <input type="text" id="compare-query2-input" placeholder="Product 2 (e.g., Google Pixel 8)">
+                </div>
+                 <button id="compare-btn" class="compare-button">
+                    Generate Comparison
+                </button>
             </div>
-
-            <div id="loadingSpinnerCompare" class="spinner-container hidden">
-                <div class="spinner"></div>
-                <p>Scraping and analyzing both products... this may take a while.</p>
-            </div>
-
-            <div id="comparisonResult" class="comparison-result-container hidden">
-                <!-- Comparison results will be injected here -->
+            
+            <div id="comparison-results-container" class="results-container hidden">
+                <!-- The final, beautiful comparison will be rendered here -->
             </div>
         </main>
     </div>
 
+    <script src="https://unpkg.com/lucide@latest"></script>
     <script src="script.js"></script>
 </body>
 </html>
