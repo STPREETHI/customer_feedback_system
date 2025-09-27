@@ -1,17 +1,10 @@
-# Python cache
-__pycache__/
-*.pyc
+Python generated filespycache/*.pyc*.pyo*.pydVirtual Environmentvenv/env/*.envIDE and Editor Folders.vscode/.idea/Generated Data & AI Filesbackend/feedback.dbbackend/review_index.faiss--- NEW: Ignore the data folder ---data/Operating System Files.DS_Store
+#### Step 2: Remove the Large File from Git's History
 
-# Virtual environments
-venv/
-.env
+Now, please run these two simple commands in your terminal, from your main project folder.
 
-# Data & large files
-*.pkl
-*.h5
-*.csv
-*.json
-*.db
-
-# Logs
-*.log
+**1. Tell Git to forget about the data folder (this will NOT delete it from your computer):**
+```bash
+git rm -r --cached data
+2. Save this change:git commit -m "Remove large data file from Git history"
+3. Push Again:Now, try your push one last time.git push
