@@ -8,6 +8,7 @@ from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
 import time
 import logging
+import concurrent.futures
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -15,11 +16,14 @@ log = logging.getLogger(__name__)
 
 # --- Definitive Selenium WebDriver Setup ---
 try:
-    log.info("--- Initializing Definitive Selenium WebDriver... ---")
+    log.info("--- Initializing Optimized Selenium WebDriver... ---")
     options = Options()
     options.add_argument("--headless=new")
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
+    options.add_argument("--disable-gpu")
+    options.add_argument("--disable-extensions")
+    options.add_argument("--disable-logging")
     options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36")
     driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
     log.info("--- Selenium WebDriver initialized successfully. ---")
@@ -31,7 +35,7 @@ def get_product_name_from_url(url: str) -> str:
     """Extracts a clean product name from a URL's page title using requests."""
     try:
         headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'}
-        response = requests.get(url, headers=headers, timeout=5)
+        response = requests.get(url, headers=headers, timeout=3)  # Reduced timeout
         soup = BeautifulSoup(response.content, 'html.parser')
         if soup.title and soup.title.string:
             title = soup.title.string
@@ -42,77 +46,97 @@ def get_product_name_from_url(url: str) -> str:
     return url.split('/')[-1].replace('-', ' ').replace('_', ' ').title()
 
 def scrape_text_from_url_with_requests(url: str) -> str:
-    """A generic scraper using requests to quickly extract paragraph text."""
+    """Ultra-fast scraper using requests with aggressive timeouts."""
     try:
         headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'}
-        response = requests.get(url, headers=headers, timeout=5)
+        response = requests.get(url, headers=headers, timeout=3)  # Very short timeout
         if response.status_code == 200:
             soup = BeautifulSoup(response.content, 'html.parser')
-            main_content = soup.find('main') or soup.find('article') or soup.find('body')
-            paragraphs = main_content.find_all('p') if main_content else []
+            # Quick text extraction - just get paragraphs
+            paragraphs = soup.find_all('p')[:10]  # Limit to first 10 paragraphs
             return ' '.join([p.get_text(strip=True) for p in paragraphs])
     except Exception as e:
-        log.warning(f"Failed to scrape {url} with requests: {e}")
+        log.warning(f"Fast scrape failed for {url}: {e}")
     return ""
 
-def perform_duckduckgo_search_with_selenium(query: str, num_results: int = 5) -> List[str]:
-    """Performs a DuckDuckGo search using Selenium."""
+def perform_duckduckgo_search_with_selenium(query: str, num_results: int = 3) -> List[str]:
+    """Ultra-fast DuckDuckGo search with reduced results."""
     if not driver: return []
     search_url = f"https://duckduckgo.com/?q={query.replace(' ', '+')}&ia=web"
     try:
-        log.info(f"Searching DuckDuckGo for: {query}")
+        log.info(f"Quick search for: {query}")
         driver.get(search_url)
-        time.sleep(2)
+        time.sleep(1)  # Reduced wait time
         soup = BeautifulSoup(driver.page_source, 'html.parser')
         links = [result['href'] for result in soup.find_all('a', {'data-testid': 'result-title-a'}, href=True, limit=num_results)]
-        log.info(f"Found {len(links)} links from DuckDuckGo.")
+        log.info(f"Found {len(links)} links quickly.")
         return links
     except Exception as e:
-        log.error(f"Definitive DuckDuckGo search failed: {e}")
+        log.error(f"Quick search failed: {e}")
         return []
 
+def parallel_scrape_urls(urls: List[str]) -> List[str]:
+    """Scrape multiple URLs in parallel for speed."""
+    all_snippets = []
+    
+    def scrape_single_url(url):
+        try:
+            content = scrape_text_from_url_with_requests(url)
+            if content:
+                # Quick sentence splitting
+                sentences = re.split(r'[.!?]+', content)
+                return [s.strip() for s in sentences if 15 < len(s.split()) < 80][:10]  # Max 10 sentences per URL
+        except:
+            pass
+        return []
+    
+    # Parallel scraping with short timeout
+    with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
+        future_to_url = {executor.submit(scrape_single_url, url): url for url in urls}
+        for future in concurrent.futures.as_completed(future_to_url, timeout=10):
+            try:
+                snippets = future.result(timeout=3)
+                all_snippets.extend(snippets)
+            except:
+                continue
+    
+    return all_snippets
+
 def get_general_reviews(query: str, num_results: int = 5) -> Dict:
-    """The final definitive version that uses an intelligent retry mechanism for searching."""
+    """Ultra-fast review aggregation with parallel processing."""
     product_name = query
     if query.startswith('http'):
-        log.info("Input is a URL. Attempting to extract product name...")
+        log.info("Extracting product name from URL...")
         product_name = get_product_name_from_url(query)
-        log.info(f"Extracted product name: '{product_name}'")
+        log.info(f"Product name: '{product_name}'")
 
+    # Quick search queries - reduced complexity
     search_queries = [
-        f'"{product_name}" review opinions',
-        f'{product_name} user reviews',
-        f'{product_name} pros and cons'
+        f'{product_name} review',
+        f'{product_name} user opinion'
     ]
     
     search_results = []
     for s_query in search_queries:
         results = perform_duckduckgo_search_with_selenium(s_query, num_results=num_results)
         if results:
-            search_results = results
+            search_results = results[:num_results]  # Take first successful search
             break
     
     if not search_results:
-        return {"status": "no_data", "message": f"Could not find any reliable search results for '{product_name}'."}
+        return {"status": "no_data", "message": f"Could not find search results for '{product_name}'."}
 
-    all_review_text_snippets = []
-    successful_sources = []
-    for url in search_results:
-        log.info(f"-> Scraping {url}")
-        content = scrape_text_from_url_with_requests(url)
-        if content:
-            successful_sources.append(url)
-            sentences = re.split(r'(?<!\w\.\w.)(?<![A-Z][a-z]\.)(?<=\.|\?)\s', content)
-            all_review_text_snippets.extend([s.strip() for s in sentences if 20 < len(s.split()) < 150])
+    # Parallel scraping for maximum speed
+    log.info(f"Parallel scraping {len(search_results)} URLs...")
+    all_review_snippets = parallel_scrape_urls(search_results)
 
-    if not all_review_text_snippets:
-        return {"status": "no_data", "message": "Found search results, but could not extract meaningful text content."}
+    if not all_review_snippets:
+        return {"status": "no_data", "message": "No meaningful content found in search results."}
         
-    log.info(f"Aggregated {len(all_review_text_snippets)} review snippets from the web.")
+    log.info(f"Ultra-fast aggregation: {len(all_review_snippets)} snippets")
     return {
         "status": "success", 
-        "reviews": all_review_text_snippets, 
+        "reviews": all_review_snippets[:50],  # Hard limit for speed
         "product_name": product_name,
-        "sources": successful_sources[:3]
+        "sources": search_results[:2]  # Limit sources shown
     }
-

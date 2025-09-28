@@ -1,4 +1,4 @@
-// ENHANCED FRONTEND SCRIPT - FINAL DEFINITIVE VERSION
+// ENHANCED FRONTEND SCRIPT - WITH SUGGESTION BOT
 document.addEventListener('DOMContentLoaded', () => {
     // --- Configuration ---
     const API_BASE_URL = 'http://127.0.0.1:5000';
@@ -41,11 +41,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const savedTheme = localStorage.getItem('theme') || 'light';
     applyTheme(savedTheme);
 
-
     // --- API Fetch Function ---
     async function handleFetch(url, body) {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 45000); // 45s timeout
+        const timeoutId = setTimeout(() => controller.abort(), 60000); // 60s timeout for optimized backend
         
         try {
             const response = await fetch(url, {
@@ -63,7 +62,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             clearTimeout(timeoutId);
             if (error.name === 'AbortError') {
-                throw new Error('Analysis timed out. The server may be busy or the request is too complex.');
+                throw new Error('Analysis timed out. Please try again with a simpler query.');
             }
             throw error;
         }
@@ -96,9 +95,11 @@ document.addEventListener('DOMContentLoaded', () => {
             container.innerHTML = `
                 <div class="dashboard-grid">
                      <div class="grid-item main-summary">
-                        <h4>The Analyst's Verdict for ${data.product_name}</h4>
-                        <p>${data.summary}</p>
-                        <span class="verdict ${verdictClass}">${data.verdict}</span>
+                        <h4>Analysis for ${data.product_name}</h4>
+                        <div class="summary-box">
+                            <p>${data.summary}</p>
+                            <span class="verdict ${verdictClass}">${data.verdict}</span>
+                        </div>
                     </div>
                     <div class="grid-item advantages">
                         <h4><i data-lucide="thumbs-up"></i> Advantages</h4>
@@ -109,15 +110,15 @@ document.addEventListener('DOMContentLoaded', () => {
                         <ul>${disadvantagesHtml}</ul>
                     </div>
                     <div class="grid-item word-cloud">
-                         <h4>Key Topic Cloud</h4>
-                         <canvas id="wordcloud-canvas" width="600" height="250"></canvas>
+                         <h4><i data-lucide="cloud"></i> Key Topics</h4>
+                         <canvas id="wordcloud-canvas" width="400" height="140"></canvas>
                     </div>
                     <div class="grid-item sentiment-chart">
-                         <h4>Sentiment</h4>
+                         <h4><i data-lucide="pie-chart"></i> Sentiment</h4>
                           <canvas id="sentimentChart"></canvas>
                     </div>
                      <div class="grid-item sources">
-                         <h4><i data-lucide="link"></i> Sources Analyzed</h4>
+                         <h4><i data-lucide="link"></i> Sources</h4>
                         <ul>${sourcesHtml}</ul>
                     </div>
                 </div>`;
@@ -128,40 +129,77 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         renderSentimentAwareWordCloud: (topics) => {
             const canvas = document.getElementById('wordcloud-canvas');
-            if (!canvas || !topics || Object.keys(topics).length === 0) return;
-            const list = Object.entries(topics).map(([key, value]) => [key, value.count * 10]);
-            WordCloud(canvas, {
-                list: list, gridSize: Math.round(16 * canvas.width / 1024),
-                weightFactor: 4, fontFamily: 'Inter, sans-serif',
-                color: (word, weight) => {
-                    const topicData = topics[word];
-                    const theme = document.body.dataset.theme;
-                    if (!topicData) return theme === 'dark' ? '#e5e7eb' : '#1f2937';
-                    if (topicData.sentiment > 0.65) return '#10b981';
-                    if (topicData.sentiment < 0.35) return '#ef4444';
-                    return theme === 'dark' ? '#9ca3af' : '#6b7280';
-                },
-                backgroundColor: 'transparent', rotateRatio: 0, minSize: 10
-            });
+            if (!canvas || !topics || Object.keys(topics).length === 0) {
+                if (canvas) {
+                    const ctx = canvas.getContext('2d');
+                    ctx.fillStyle = 'var(--text-secondary)';
+                    ctx.font = '14px Inter';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('No topics found', canvas.width/2, canvas.height/2);
+                }
+                return;
+            }
+            
+            canvas.width = 400;
+            canvas.height = 140;
+            
+            const list = Object.entries(topics).map(([key, value]) => [key, Math.max(value.count * 6, 10)]);
+            
+            if (typeof WordCloud !== 'undefined' && list.length > 0) {
+                WordCloud(canvas, {
+                    list: list,
+                    gridSize: 6,
+                    weightFactor: 1.5,
+                    fontFamily: 'Inter, sans-serif',
+                    color: (word, weight) => {
+                        const topicData = topics[word];
+                        if (!topicData) return '#6b7280';
+                        if (topicData.sentiment > 0.65) return '#10b981';
+                        if (topicData.sentiment < 0.35) return '#ef4444';
+                        return '#6b7280';
+                    },
+                    backgroundColor: 'transparent',
+                    rotateRatio: 0,
+                    minSize: 10,
+                    maxSize: 20,
+                    drawOutOfBound: false
+                });
+            }
         },
         renderSentimentChart: (sentimentData) => {
             const ctx = document.getElementById('sentimentChart')?.getContext('2d');
             if (!ctx) return;
             if(sentimentChartInstance) sentimentChartInstance.destroy();
+            
             const theme = document.body.dataset.theme;
             const chartTextColor = theme === 'dark' ? '#e5e7eb' : '#6b7280';
             const borderColor = theme === 'dark' ? '#1f2937' : '#ffffff';
+            
             sentimentChartInstance = new Chart(ctx, {
-                type: 'doughnut', data: {
+                type: 'doughnut', 
+                data: {
                     labels: [`Positive (${sentimentData.positive})`, `Negative (${sentimentData.negative})`],
-                    datasets: [{ data: [sentimentData.positive, sentimentData.negative],
-                        backgroundColor: [ '#28a745', '#ef4444'],
+                    datasets: [{ 
+                        data: [sentimentData.positive, sentimentData.negative],
+                        backgroundColor: [ '#10b981', '#ef4444'],
                         borderColor: borderColor, 
-                        borderWidth: 4, 
+                        borderWidth: 2, 
                     }]
                 },
-                options: { responsive: true, maintainAspectRatio: false, cutout: '70%',
-                    plugins: { legend: { labels: { color: chartTextColor } } }
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    cutout: '60%',
+                    plugins: { 
+                        legend: { 
+                            labels: { 
+                                color: chartTextColor,
+                                font: { size: 11 },
+                                usePointStyle: true,
+                            },
+                            position: 'bottom'
+                        } 
+                    }
                 }
             });
         },
@@ -177,15 +215,95 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
             `;
             container.innerHTML = `
-                <div class="main-summary">
-                    <h4>The Final Verdict</h4>
-                    <p>${data.comparison_summary.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')}</p>
+                <div class="grid-item main-summary">
+                    <h4>Comparison Summary</h4>
+                    <div class="summary-box">
+                        <p>${data.comparison_summary}</p>
+                        <p style="margin-top: 0.75rem; font-weight: 500; color: var(--accent-blue);">
+                            <strong>Recommendation:</strong> ${data.recommendation}
+                        </p>
+                    </div>
                 </div>
                 <div class="comparison-grid">
                     ${renderProductCard(data.product1)}
                     ${renderProductCard(data.product2)}
                 </div>`;
             lucide.createIcons();
+        }
+    };
+
+    // --- Suggestion Bot Implementation ---
+    const suggestionBot = {
+        init: () => {
+            const botHtml = `
+                <div class="suggestion-bot">
+                    <button class="suggestion-trigger" id="suggestion-trigger" title="Get Product Suggestions">
+                        <i data-lucide="lightbulb"></i>
+                    </button>
+                    <div class="suggestion-popup" id="suggestion-popup">
+                        <h3><i data-lucide="star"></i> Best Product Suggestion</h3>
+                        <div class="category-selector">
+                            <button class="category-btn active" data-category="phone">Phone</button>
+                            <button class="category-btn" data-category="laptop">Laptop</button>
+                            <button class="category-btn" data-category="tablet">Tablet</button>
+                            <button class="category-btn" data-category="smartwatch">Watch</button>
+                            <button class="category-btn" data-category="audio">Audio</button>
+                        </div>
+                        <div class="suggestion-content" id="suggestion-content">
+                            <div class="spinner" style="margin: 1rem auto; width: 20px; height: 20px;"></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.insertAdjacentHTML('beforeend', botHtml);
+            
+            suggestionBot.bindEvents();
+            suggestionBot.loadSuggestion('phone'); // Default category
+        },
+        
+        bindEvents: () => {
+            const trigger = document.getElementById('suggestion-trigger');
+            const popup = document.getElementById('suggestion-popup');
+            const categoryBtns = document.querySelectorAll('.category-btn');
+            
+            trigger?.addEventListener('click', () => {
+                popup.classList.toggle('active');
+            });
+            
+            // Close popup when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.suggestion-bot')) {
+                    popup.classList.remove('active');
+                }
+            });
+            
+            categoryBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    categoryBtns.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    suggestionBot.loadSuggestion(btn.dataset.category);
+                });
+            });
+        },
+        
+        loadSuggestion: async (category) => {
+            const content = document.getElementById('suggestion-content');
+            if (!content) return;
+            
+            content.innerHTML = '<div class="spinner" style="margin: 1rem auto; width: 20px; height: 20px;"></div>';
+            
+            try {
+                const response = await handleFetch(`${API_BASE_URL}/api/suggest_best_product`, { category });
+                const suggestion = response.suggestion;
+                
+                content.innerHTML = `
+                    <div class="product-name">${suggestion.name}</div>
+                    <div class="product-reason">${suggestion.reason}</div>
+                    <div class="product-rating">Rating: ${suggestion.rating}</div>
+                `;
+            } catch (error) {
+                content.innerHTML = `<p style="color: var(--accent-red); font-size: 0.8rem;">Failed to load suggestion</p>`;
+            }
         }
     };
 
@@ -214,7 +332,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const query1 = compareQuery1Input.value.trim();
         const query2 = compareQuery2Input.value.trim();
         const originalText = compareBtn.textContent || 'Generate Comparison';
-        if (!query1 || !query2) { ui.showError(comparisonResultsContainer, 'Please provide two queries.'); return; }
+        if (!query1 || !query2) { ui.showError(comparisonResultsContainer, 'Please provide two product names.'); return; }
 
         ui.setButtonLoading(compareBtn, true, originalText);
         ui.showLoading(comparisonResultsContainer, `Comparing "${query1}" vs "${query2}"...`);
@@ -229,7 +347,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
     
-    // --- Initializers & Event Listeners ---
+    // --- Initialize Everything ---
     if (analyzeBtn) analyzeBtn.addEventListener('click', handleAnalysis);
     if (productQueryInput) {
         productQueryInput.addEventListener('keypress', (e) => {
@@ -238,6 +356,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     if (compareBtn) compareBtn.addEventListener('click', handleComparison);
 
+    // Initialize suggestion bot
+    suggestionBot.init();
+    
     lucide.createIcons();
 });
-
