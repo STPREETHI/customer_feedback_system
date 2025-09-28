@@ -232,25 +232,26 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
+    let lastAnalyzedProduct = null;
+    let lastScrapedData = null;
+
     // --- Suggestion Bot Implementation ---
     const suggestionBot = {
         init: () => {
             const botHtml = `
                 <div class="suggestion-bot">
-                    <button class="suggestion-trigger" id="suggestion-trigger" title="Get Product Suggestions">
+                    <button class="suggestion-trigger" id="suggestion-trigger" title="Get Best in Category">
                         <i data-lucide="lightbulb"></i>
                     </button>
                     <div class="suggestion-popup" id="suggestion-popup">
-                        <h3><i data-lucide="star"></i> Best Product Suggestion</h3>
-                        <div class="category-selector">
-                            <button class="category-btn active" data-category="phone">Phone</button>
-                            <button class="category-btn" data-category="laptop">Laptop</button>
-                            <button class="category-btn" data-category="tablet">Tablet</button>
-                            <button class="category-btn" data-category="smartwatch">Watch</button>
-                            <button class="category-btn" data-category="audio">Audio</button>
-                        </div>
+                        <h3><i data-lucide="star"></i> Best in Category</h3>
+                        <p style="font-size: 0.75rem; color: var(--text-secondary); margin: 0 0 0.75rem 0;">
+                            Shows the top-rated product in the same category based on review analysis.
+                        </p>
                         <div class="suggestion-content" id="suggestion-content">
-                            <div class="spinner" style="margin: 1rem auto; width: 20px; height: 20px;"></div>
+                            <p style="color: var(--text-secondary); font-size: 0.8rem; text-align: center;">
+                                Analyze a product first to get category recommendations.
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -258,16 +259,18 @@ document.addEventListener('DOMContentLoaded', () => {
             document.body.insertAdjacentHTML('beforeend', botHtml);
             
             suggestionBot.bindEvents();
-            suggestionBot.loadSuggestion('phone'); // Default category
         },
         
         bindEvents: () => {
             const trigger = document.getElementById('suggestion-trigger');
             const popup = document.getElementById('suggestion-popup');
-            const categoryBtns = document.querySelectorAll('.category-btn');
             
             trigger?.addEventListener('click', () => {
                 popup.classList.toggle('active');
+                // Auto-load suggestion if we have analyzed product
+                if (lastAnalyzedProduct && lastScrapedData) {
+                    suggestionBot.loadSuggestionFromAnalysis();
+                }
             });
             
             // Close popup when clicking outside
@@ -276,34 +279,75 @@ document.addEventListener('DOMContentLoaded', () => {
                     popup.classList.remove('active');
                 }
             });
-            
-            categoryBtns.forEach(btn => {
-                btn.addEventListener('click', () => {
-                    categoryBtns.forEach(b => b.classList.remove('active'));
-                    btn.classList.add('active');
-                    suggestionBot.loadSuggestion(btn.dataset.category);
-                });
-            });
         },
         
-        loadSuggestion: async (category) => {
+        loadSuggestionFromAnalysis: async () => {
             const content = document.getElementById('suggestion-content');
-            if (!content) return;
+            if (!content || !lastAnalyzedProduct) {
+                content.innerHTML = '<p style="color: var(--text-secondary); font-size: 0.8rem; text-align: center;">Analyze a product first to get recommendations.</p>';
+                return;
+            }
             
             content.innerHTML = '<div class="spinner" style="margin: 1rem auto; width: 20px; height: 20px;"></div>';
             
             try {
-                const response = await handleFetch(`${API_BASE_URL}/api/suggest_best_product`, { category });
-                const suggestion = response.suggestion;
+                const response = await handleFetch(`${API_BASE_URL}/api/suggest_best_product`, { 
+                    category: 'general', 
+                    query: lastAnalyzedProduct 
+                });
                 
-                content.innerHTML = `
-                    <div class="product-name">${suggestion.name}</div>
-                    <div class="product-reason">${suggestion.reason}</div>
-                    <div class="product-rating">Rating: ${suggestion.rating}</div>
-                `;
+                if (response.status === 'success' && response.suggestion) {
+                    const suggestion = response.suggestion;
+                    
+                    if (suggestion.rating === 'N/A' || suggestion.name.includes('No') || suggestion.name.includes('research')) {
+                        content.innerHTML = `
+                            <div class="product-name" style="color: var(--text-secondary);">${suggestion.name}</div>
+                            <div class="product-reason" style="font-size: 0.8rem; margin-top: 0.5rem;">${suggestion.reason}</div>
+                        `;
+                    } else {
+                        content.innerHTML = `
+                            <div class="product-name" style="color: var(--accent-blue); font-weight: 600;">${suggestion.name}</div>
+                            <div class="product-reason" style="font-size: 0.8rem; margin: 0.5rem 0; line-height: 1.4;">${suggestion.reason}</div>
+                            <div class="product-rating" style="color: var(--accent-green); font-weight: 500;">Rating: ${suggestion.rating}</div>
+                            <button onclick="
+                                document.getElementById('product-query-input').value='${suggestion.name}';
+                                document.getElementById('analyze-btn').click();
+                                document.getElementById('suggestion-popup').classList.remove('active');
+                            " 
+                            style="
+                                margin-top: 0.75rem; 
+                                padding: 0.4rem 0.75rem; 
+                                background: var(--accent-green); 
+                                color: white; 
+                                border: none; 
+                                border-radius: 6px; 
+                                font-size: 0.75rem; 
+                                cursor: pointer;
+                                transition: background-color 0.2s ease;
+                            "
+                            onmouseover="this.style.background='#059669'"
+                            onmouseout="this.style.background='var(--accent-green)'">
+                                📊 Analyze This Product
+                            </button>
+                        `;
+                    }
+                } else {
+                    throw new Error('Invalid response format');
+                }
             } catch (error) {
-                content.innerHTML = `<p style="color: var(--accent-red); font-size: 0.8rem;">Failed to load suggestion</p>`;
+                console.error('Suggestion error:', error);
+                content.innerHTML = `
+                    <div style="text-align: center;">
+                        <p style="color: var(--accent-red); font-size: 0.8rem;">Unable to load suggestions</p>
+                        <p style="color: var(--text-secondary); font-size: 0.75rem;">Try analyzing the product again</p>
+                    </div>
+                `;
             }
+        },
+        
+        updateWithNewAnalysis: (productName, scrapedData) => {
+            lastAnalyzedProduct = productName;
+            lastScrapedData = scrapedData;
         }
     };
 
@@ -320,6 +364,10 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const results = await handleFetch(`${API_BASE_URL}/api/analyze_product`, { query });
             ui.renderFullAnalysis(resultsContainer, results);
+            
+            // Update suggestion bot with new analysis
+            suggestionBot.updateWithNewAnalysis(query, results);
+            
         } catch (error) { 
             ui.showError(resultsContainer, error.message);
         } finally { 

@@ -102,13 +102,41 @@ def compare_products():
 
 @app.route('/api/suggest_best_product', methods=['POST'])
 def suggest_best_product():
-    """ New endpoint for getting category-based product suggestions. """
+    """ Generate suggestions ONLY from scraped review analysis. """
     data = request.get_json()
     category = data.get('category', 'general')
+    query = data.get('query', '')  # Specific product query required
     
-    log.info(f"Received suggestion request for category: {category}")
+    log.info(f"Received suggestion request for category: {category}, query: {query}")
     
-    suggestion = get_category_suggestion(category)
+    # Only provide suggestions if we have a specific product to analyze
+    if query and query.strip():
+        try:
+            # Scrape actual reviews for the specific product
+            scrape_result = get_general_reviews(query, num_results=2)
+            if scrape_result["status"] == "success":
+                from rag import generate_context_based_suggestions
+                suggestion = generate_context_based_suggestions(query, scrape_result)
+            else:
+                suggestion = {
+                    'name': 'No Review Data Available',
+                    'reason': f'Could not find sufficient review data for "{query}" to generate recommendations.',
+                    'rating': 'N/A'
+                }
+        except Exception as e:
+            log.error(f"Error analyzing product for suggestions: {e}")
+            suggestion = {
+                'name': 'Analysis Failed',
+                'reason': 'Unable to analyze product reviews at this time.',
+                'rating': 'N/A'
+            }
+    else:
+        # No specific product provided - cannot make suggestions without scraped data
+        suggestion = {
+            'name': 'Specific Product Required',
+            'reason': 'Please analyze a specific product first to get personalized recommendations based on real user reviews.',
+            'rating': 'N/A'
+        }
     
     return jsonify({
         "status": "success",
