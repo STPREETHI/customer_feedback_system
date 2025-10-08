@@ -28,6 +28,229 @@ summary_tokenizer = T5Tokenizer.from_pretrained(SUMMARY_MODEL_NAME)
 summary_model = T5ForConditionalGeneration.from_pretrained(SUMMARY_MODEL_NAME)
 log.info("--- RAG models initialized. ---")
 
+def keyword_based_sentiment_analysis(reviews):
+    """
+    Advanced keyword-based sentiment analysis with scoring and context awareness.
+    Returns percentages instead of raw counts.
+    """
+    # Extended keyword dictionaries with weights
+    positive_keywords = {
+        # Highly positive (weight 3)
+        'excellent': 3, 'amazing': 3, 'outstanding': 3, 'perfect': 3, 'fantastic': 3,
+        'brilliant': 3, 'exceptional': 3, 'superb': 3, 'magnificent': 3,
+        
+        # Very positive (weight 2.5)
+        'wonderful': 2.5, 'awesome': 2.5, 'incredible': 2.5, 'remarkable': 2.5,
+        'impressive': 2.5, 'beautiful': 2.5, 'stunning': 2.5,
+        
+        # Positive (weight 2)
+        'great': 2, 'good': 2, 'nice': 2, 'love': 2, 'lovely': 2, 'pleased': 2,
+        'happy': 2, 'satisfied': 2, 'recommend': 2, 'recommended': 2, 'solid': 2,
+        
+        # Moderately positive (weight 1.5)
+        'decent': 1.5, 'fine': 1.5, 'okay': 1.5, 'useful': 1.5, 'helpful': 1.5,
+        'convenient': 1.5, 'comfortable': 1.5, 'reliable': 1.5, 'sturdy': 1.5,
+        
+        # Mildly positive (weight 1)
+        'quality': 1, 'fast': 1, 'quick': 1, 'easy': 1, 'smooth': 1, 'clear': 1,
+        'bright': 1, 'clean': 1, 'fresh': 1, 'works': 1, 'working': 1
+    }
+    
+    negative_keywords = {
+        # Highly negative (weight -3)
+        'terrible': -3, 'awful': -3, 'horrible': -3, 'disgusting': -3, 'atrocious': -3,
+        'appalling': -3, 'dreadful': -3, 'abysmal': -3, 'deplorable': -3,
+        
+        # Very negative (weight -2.5)
+        'pathetic': -2.5, 'ridiculous': -2.5, 'outrageous': -2.5, 'unacceptable': -2.5,
+        'disaster': -2.5, 'nightmare': -2.5, 'catastrophe': -2.5,
+        
+        # Negative (weight -2)
+        'bad': -2, 'poor': -2, 'hate': -2, 'disappointed': -2, 'disappointing': -2,
+        'useless': -2, 'worthless': -2, 'broken': -2, 'defective': -2, 'faulty': -2,
+        'waste': -2, 'regret': -2, 'worst': -2,
+        
+        # Moderately negative (weight -1.5)
+        'annoying': -1.5, 'frustrating': -1.5, 'confusing': -1.5, 'complicated': -1.5,
+        'uncomfortable': -1.5, 'inconvenient': -1.5, 'unreliable': -1.5,
+        
+        # Mildly negative (weight -1)
+        'slow': -1, 'expensive': -1, 'costly': -1, 'difficult': -1, 'hard': -1,
+        'problem': -1, 'issue': -1, 'trouble': -1, 'concern': -1, 'lacking': -1,
+        'missing': -1, 'limited': -1
+    }
+    
+    # Negation words that flip sentiment
+    negation_words = {'not', 'no', 'never', 'nothing', 'nowhere', 'nobody', 'none', 
+                     'neither', 'nor', 'hardly', 'barely', 'scarcely', 'seldom', 'rarely'}
+    
+    # Intensifier words that amplify sentiment
+    intensifiers = {
+        'very': 1.5, 'really': 1.5, 'extremely': 2.0, 'incredibly': 2.0, 'absolutely': 2.0,
+        'completely': 1.8, 'totally': 1.8, 'quite': 1.3, 'rather': 1.2, 'pretty': 1.2,
+        'so': 1.4, 'too': 1.3, 'highly': 1.6, 'deeply': 1.5, 'truly': 1.4
+    }
+    
+    total_positive = 0
+    total_negative = 0
+    sentiment_words_found = {}
+    total_reviews_analyzed = len([r for r in reviews if r and len(r.strip()) >= 3])
+    
+    for review_text in reviews:
+        if not review_text or len(review_text.strip()) < 3:
+            continue
+            
+        words = review_text.lower().split()
+        
+        i = 0
+        while i < len(words):
+            word = words[i].strip('.,!?;:"')
+            
+            # Check for negation in the previous 2 words
+            negated = False
+            intensifier_mult = 1.0
+            
+            # Look back for negations and intensifiers
+            for j in range(max(0, i-2), i):
+                prev_word = words[j].strip('.,!?;:"')
+                if prev_word in negation_words:
+                    negated = True
+                if prev_word in intensifiers:
+                    intensifier_mult = intensifiers[prev_word]
+            
+            # Process positive keywords
+            if word in positive_keywords:
+                score = positive_keywords[word] * intensifier_mult
+                if negated:
+                    score = -score  # Flip sentiment for negation
+                    total_negative += abs(score)
+                    sentiment_words_found[f"not_{word}"] = sentiment_words_found.get(f"not_{word}", 0) + 1
+                else:
+                    total_positive += score
+                    sentiment_words_found[word] = sentiment_words_found.get(word, 0) + 1
+            
+            # Process negative keywords
+            elif word in negative_keywords:
+                score = abs(negative_keywords[word]) * intensifier_mult
+                if negated:
+                    score = score  # Double negation makes it positive
+                    total_positive += score
+                    sentiment_words_found[f"not_{word}"] = sentiment_words_found.get(f"not_{word}", 0) + 1
+                else:
+                    total_negative += score
+                    sentiment_words_found[word] = sentiment_words_found.get(word, 0) + 1
+            
+            i += 1
+    
+    # Calculate percentages instead of raw counts
+    total_sentiment_score = total_positive + total_negative
+    
+    if total_sentiment_score > 0:
+        positive_percentage = (total_positive / total_sentiment_score) * 100
+        negative_percentage = (total_negative / total_sentiment_score) * 100
+    else:
+        positive_percentage = 50
+        negative_percentage = 50
+    
+    # Convert to readable format
+    positive_display = f"{positive_percentage:.1f}%"
+    negative_display = f"{negative_percentage:.1f}%"
+    
+    return {
+        "positive": int(positive_percentage),  # For chart display
+        "negative": int(negative_percentage),  # For chart display  
+        "positive_display": positive_display,  # For text display
+        "negative_display": negative_display,  # For text display
+        "total_reviews": total_reviews_analyzed,
+        "sentiment_words": sentiment_words_found,
+        "total_score": total_positive - total_negative
+    }
+
+def extract_keyword_based_topics(reviews):
+    """
+    Extract key topics using keyword frequency and context analysis.
+    """
+    # Product-specific topic keywords
+    topic_keywords = {
+        'quality': ['quality', 'build', 'construction', 'material', 'solid', 'sturdy', 'durable', 'cheap', 'flimsy'],
+        'performance': ['fast', 'slow', 'speed', 'performance', 'lag', 'smooth', 'responsive', 'quick'],
+        'design': ['design', 'look', 'appearance', 'beautiful', 'ugly', 'style', 'color', 'size'],
+        'usability': ['easy', 'difficult', 'user', 'interface', 'simple', 'complicated', 'intuitive'],
+        'value': ['price', 'cost', 'expensive', 'cheap', 'worth', 'value', 'money', 'affordable'],
+        'reliability': ['reliable', 'unreliable', 'stable', 'crash', 'bug', 'issue', 'problem', 'works'],
+        'customer_service': ['service', 'support', 'help', 'staff', 'customer', 'response', 'assistance']
+    }
+    
+    topic_scores = {}
+    topic_sentiments = {}
+    
+    # Analyze sentiment for each topic
+    sentiment_result = keyword_based_sentiment_analysis(reviews)
+    sentiment_words = sentiment_result.get('sentiment_words', {})
+    
+    for topic, keywords in topic_keywords.items():
+        topic_count = 0
+        topic_sentiment_score = 0
+        
+        for review in reviews:
+            review_lower = review.lower()
+            for keyword in keywords:
+                if keyword in review_lower:
+                    topic_count += review_lower.count(keyword)
+                    
+                    # Calculate sentiment for this keyword occurrence
+                    if keyword in sentiment_words:
+                        # Get context around keyword for sentiment
+                        words = review_lower.split()
+                        for i, word in enumerate(words):
+                            if keyword in word:
+                                # Check sentiment in surrounding context (±3 words)
+                                context = ' '.join(words[max(0,i-3):min(len(words),i+4)])
+                                context_sentiment = keyword_based_sentiment_analysis([context])
+                                if context_sentiment['positive'] > context_sentiment['negative']:
+                                    topic_sentiment_score += 1
+                                else:
+                                    topic_sentiment_score -= 1
+        
+        if topic_count > 0:
+            sentiment_ratio = (topic_sentiment_score + topic_count) / (2 * topic_count)  # Normalize to 0-1
+            sentiment_ratio = max(0, min(1, sentiment_ratio))  # Clamp to 0-1
+            
+            topic_scores[topic] = {
+                "count": min(topic_count, 20),  # Cap for visualization
+                "sentiment": sentiment_ratio
+            }
+    
+    # Add most frequent individual words as topics
+    all_words = ' '.join(reviews).lower().split()
+    word_freq = Counter(all_words)
+    
+    # Filter for meaningful words
+    meaningful_words = {}
+    for word, count in word_freq.most_common(50):
+        if (len(word) >= 4 and count >= 2 and 
+            word not in ['this', 'that', 'with', 'have', 'been', 'were', 'they', 'from', 'would']):
+            
+            # Calculate sentiment for this word
+            word_sentiment = 0.5  # Neutral default
+            if word in sentiment_words:
+                word_reviews = [r for r in reviews if word in r.lower()]
+                if word_reviews:
+                    word_sent_analysis = keyword_based_sentiment_analysis(word_reviews)
+                    total = word_sent_analysis['positive'] + word_sent_analysis['negative']
+                    if total > 0:
+                        word_sentiment = word_sent_analysis['positive'] / total
+            
+            meaningful_words[word] = {
+                "count": min(count, 15),
+                "sentiment": word_sentiment
+            }
+    
+    # Combine topic keywords and individual words
+    topic_scores.update(list(meaningful_words.items())[:10])  # Add top 10 individual words
+    
+    return topic_scores
+
 def generate_with_t5(prompt: str, max_length: int = 100) -> str:
     """Fast T5 generation with optimized settings."""
     inputs = summary_tokenizer.encode(prompt, return_tensors="pt", max_length=256, truncation=True)
@@ -52,55 +275,6 @@ def smart_snippet_selection(reviews: list, max_snippets: int = 20) -> list:
     selected.extend(sorted_by_length)
     
     return list(set(selected))[:max_snippets]
-
-def extract_key_phrases_fast(reviews: list) -> dict:
-    """Fast extraction of key phrases without heavy NLP."""
-    word_counts = Counter()
-    sentiment_mapping = {}
-    
-    # Get sentiments for sampled reviews only
-    sample_reviews = reviews[:15] if len(reviews) > 15 else reviews
-    sentiments = sentiment_pipeline(sample_reviews)
-    
-    for i, review in enumerate(sample_reviews):
-        sentiment = sentiments[i]['label']
-        # Simple word extraction
-        words = re.findall(r'\b\w{4,}\b', review.lower())
-        for word in words:
-            if word not in ['this', 'that', 'with', 'have', 'been', 'very', 'good', 'great']:
-                word_counts[word] += 1
-                if word not in sentiment_mapping:
-                    sentiment_mapping[word] = []
-                sentiment_mapping[word].append(sentiment)
-    
-    # Build topic cloud data
-    topic_data = {}
-    for word, count in word_counts.most_common(15):
-        if count > 1:
-            sentiments = sentiment_mapping[word]
-            positive_ratio = sum(1 for s in sentiments if s == 'POSITIVE') / len(sentiments)
-            topic_data[word] = {"count": count, "sentiment": positive_ratio}
-    
-    return topic_data
-
-def quick_sentiment_analysis(reviews: list) -> dict:
-    """Quick sentiment analysis with batching."""
-    if not reviews:
-        return {"positive": 0, "negative": 0}
-    
-    # Sample for speed
-    sample_size = min(30, len(reviews))
-    sample = random.sample(reviews, sample_size) if len(reviews) > sample_size else reviews
-    
-    sentiments = sentiment_pipeline(sample)
-    counts = Counter(s['label'] for s in sentiments)
-    
-    # Scale up to represent full dataset
-    scale_factor = len(reviews) / len(sample) if len(sample) > 0 else 1
-    return {
-        "positive": int(counts.get('POSITIVE', 0) * scale_factor),
-        "negative": int(counts.get('NEGATIVE', 0) * scale_factor)
-    }
 
 def clean_and_fix_grammar(text: str) -> str:
     """Clean text and fix basic grammar issues."""
@@ -131,143 +305,137 @@ def clean_and_fix_grammar(text: str) -> str:
         
     return text
 
-def generate_structured_summary(reviews: list) -> str:
-    """Generate clean, professional summary from reviews."""
+def generate_keyword_based_summary(reviews: list, sentiment_data: dict) -> str:
+    """Generate summary based on keyword analysis with percentage display."""
     if not reviews:
         return "No user feedback available for comprehensive analysis."
     
-    # Use diverse sample from reviews
-    sample_text = ". ".join([r[:60] for r in reviews[:5] if r.strip()])[:300]
+    total_reviews = sentiment_data.get("total_reviews", len(reviews))
+    positive_pct = sentiment_data.get("positive_display", "50.0%")
+    negative_pct = sentiment_data.get("negative_display", "50.0%")
+    positive_ratio = sentiment_data["positive"] / 100  # Convert back to ratio for logic
     
-    if not sample_text:
-        return "Limited user feedback available for analysis."
+    # Get most common sentiment words
+    sentiment_words = sentiment_data.get('sentiment_words', {})
+    top_positive = [word for word, count in Counter(sentiment_words).most_common(3) 
+                   if not word.startswith('not_')]
+    top_negative = [word for word, count in Counter(sentiment_words).most_common(3) 
+                   if word.startswith('not_') or word in ['bad', 'poor', 'terrible', 'awful', 'disappointing']]
     
-    # Improved prompt for structured summary
-    prompt = f"Summarize user feedback professionally in 2 sentences: {sample_text}"
-    
-    result = generate_with_t5(prompt, max_length=50)
-    
-    if result:
-        cleaned = clean_and_fix_grammar(result)
-        if len(cleaned) > 20:
-            return cleaned
-    
-    # Fallback to simple analysis
-    positive_words = ['good', 'great', 'excellent', 'amazing', 'love', 'recommend']
-    negative_words = ['bad', 'terrible', 'awful', 'hate', 'problem', 'issue']
-    
-    text_combined = ' '.join(reviews[:5]).lower()
-    positive_count = sum(1 for word in positive_words if word in text_combined)
-    negative_count = sum(1 for word in negative_words if word in text_combined)
-    
-    if positive_count > negative_count:
-        return "User reviews indicate generally positive feedback with good satisfaction levels."
-    elif negative_count > positive_count:
-        return "User reviews show mixed feedback with some concerns raised about the product."
+    # Generate template-based summary with percentages
+    if positive_ratio >= 0.7:
+        summary = f"Users express positive feedback with {positive_pct} positive sentiment across {total_reviews} reviews analyzed. "
+        if top_positive:
+            summary += f"Commonly mentioned positives include {', '.join(top_positive[:2])}. "
+        summary += "Overall satisfaction appears high based on user sentiment."
+        
+    elif positive_ratio >= 0.4:
+        summary = f"Mixed user opinions found with {positive_pct} positive and {negative_pct} negative sentiment across {total_reviews} reviews. "
+        if top_positive and top_negative:
+            summary += f"Users appreciate {', '.join(top_positive[:1])} but note concerns about {', '.join(top_negative[:1])}. "
+        summary += "Consider individual needs when evaluating this product."
+        
     else:
-        return "User reviews present balanced opinions with both positive and negative aspects noted."
+        summary = f"User feedback shows concerns with {negative_pct} negative sentiment across {total_reviews} reviews analyzed. "
+        if top_negative:
+            summary += f"Common issues mentioned include {', '.join(top_negative[:2])}. "
+        summary += "Careful consideration recommended before purchase."
+    
+    return clean_and_fix_grammar(summary)
 
-def extract_clean_points(text: str, point_type: str) -> list:
-    """Extract and clean bullet points from generated text."""
-    if not text:
-        return []
-    
-    # Try to extract structured points
-    points = []
-    
-    # Look for various bullet point patterns
-    patterns = [
-        r'[-*•]\s*([^-*•\n]+)',
-        r'\d+\.\s*([^\n\d]+)',
-        r'(?:^|\n)\s*([A-Z][^.\n]{10,80}[.])',
-    ]
-    
-    for pattern in patterns:
-        matches = re.findall(pattern, text, re.MULTILINE)
-        if matches:
-            for match in matches:
-                clean_point = clean_and_fix_grammar(match.strip())
-                if clean_point and len(clean_point) > 10 and len(clean_point) < 100:
-                    points.append(clean_point)
-            break  # Use first successful pattern
-    
-    # If no structured points found, try to extract sentences
-    if not points:
-        sentences = re.split(r'[.!?]+', text)
-        for sentence in sentences:
-            clean_sentence = clean_and_fix_grammar(sentence.strip())
-            if clean_sentence and len(clean_sentence) > 15 and len(clean_sentence) < 80:
-                points.append(clean_sentence)
-    
-    # Return up to 3 points
-    return points[:3] if points else [f"General {point_type.lower()} feedback noted in user reviews"]
-
-def extract_structured_advantages(reviews: list) -> list:
-    """Extract clean, structured advantages from positive reviews."""
+def extract_keyword_based_advantages(reviews: list, sentiment_data: dict) -> list:
+    """Extract advantages using keyword analysis."""
     if not reviews:
-        return ["Good build quality noted", "User-friendly design appreciated", "Reliable performance mentioned"]
+        return ["Positive aspects noted in user feedback", "Good user experience reported", "Recommended by users"]
     
-    # Get positive reviews only
-    sample_reviews = reviews[:15]
-    try:
-        sentiments = sentiment_pipeline(sample_reviews)
-        positive_reviews = [sample_reviews[i] for i, s in enumerate(sentiments) if s['label'] == 'POSITIVE'][:4]
-    except:
-        positive_reviews = sample_reviews[:4]  # Fallback
+    # Define advantage patterns
+    advantage_patterns = {
+        'quality': "Good build quality and materials noted by users",
+        'fast': "Fast performance and quick response times mentioned", 
+        'easy': "User-friendly and easy to use according to reviews",
+        'great': "Great overall experience reported by users",
+        'love': "Users express strong satisfaction and recommendation",
+        'recommend': "Highly recommended by satisfied customers",
+        'excellent': "Excellent quality and performance highlighted",
+        'amazing': "Amazing features and capabilities praised",
+        'perfect': "Perfect fit for user needs and expectations",
+        'good': "Good value and reliable performance noted",
+        'works': "Reliable functionality confirmed by users",
+        'solid': "Solid construction and dependable operation",
+        'beautiful': "Attractive design and aesthetic appeal mentioned",
+        'comfortable': "Comfortable usage experience reported"
+    }
     
-    if positive_reviews:
-        pos_text = " ".join(positive_reviews)[:250]
-        
-        # Simple, clear prompt
-        prompt = f"List 3 benefits users mention: {pos_text}"
-        
-        result = generate_with_t5(prompt, max_length=60)
-        advantages = extract_clean_points(result, "advantage")
-        
-        if advantages and len(advantages) >= 2:
-            return advantages
+    sentiment_words = sentiment_data.get('sentiment_words', {})
+    advantages = []
     
-    # Fallback advantages
-    return [
-        "Positive user experiences reported in reviews",
-        "Good value for money mentioned by users", 
-        "Reliable performance noted in feedback"
-    ]
+    # Find advantages based on positive sentiment words
+    for word, count in sentiment_words.items():
+        if not word.startswith('not_') and word in advantage_patterns and count > 0:
+            advantages.append(advantage_patterns[word])
+    
+    # Add generic advantages if specific ones not found
+    if len(advantages) < 3:
+        generic_advantages = [
+            "Positive user experiences reported in reviews",
+            "Good value for money mentioned by users", 
+            "Reliable performance noted in feedback",
+            "User-friendly design appreciated",
+            "Quality construction highlighted",
+            "Effective functionality confirmed"
+        ]
+        advantages.extend(generic_advantages)
+    
+    return advantages[:3]
 
-def extract_structured_disadvantages(reviews: list) -> list:
-    """Extract clean, structured disadvantages from negative reviews."""
+def extract_keyword_based_disadvantages(reviews: list, sentiment_data: dict) -> list:
+    """Extract disadvantages using keyword analysis."""
     if not reviews:
-        return ["Some pricing concerns raised", "Minor usability issues noted", "Mixed user experiences reported"]
+        return ["Some concerns raised in user feedback", "Mixed experiences reported", "Individual preferences may vary"]
     
-    # Get negative reviews only
-    sample_reviews = reviews[:15]
-    try:
-        sentiments = sentiment_pipeline(sample_reviews)
-        negative_reviews = [sample_reviews[i] for i, s in enumerate(sentiments) if s['label'] == 'NEGATIVE'][:4]
-    except:
-        negative_reviews = sample_reviews[:4]  # Fallback
+    # Define disadvantage patterns
+    disadvantage_patterns = {
+        'expensive': "Price point considered high by some users",
+        'slow': "Performance speed concerns mentioned in reviews",
+        'difficult': "Usability challenges noted by some users", 
+        'bad': "Quality issues reported by users",
+        'poor': "Poor performance or build quality mentioned",
+        'problem': "Technical problems and issues reported",
+        'issue': "Various issues and concerns raised by users",
+        'not_good': "Not meeting user expectations in some cases",
+        'not_great': "Performance below expectations for some users",
+        'not_recommend': "Some users would not recommend this product",
+        'disappointing': "Disappointing experience reported by users",
+        'waste': "Poor value for money according to some reviews",
+        'broken': "Durability and reliability concerns mentioned",
+        'terrible': "Significant quality or performance issues noted",
+        'awful': "Very poor user experience reported"
+    }
     
-    if negative_reviews:
-        neg_text = " ".join(negative_reviews)[:250]
-        
-        # Simple, clear prompt
-        prompt = f"List 3 issues users report: {neg_text}"
-        
-        result = generate_with_t5(prompt, max_length=60)
-        disadvantages = extract_clean_points(result, "disadvantage")
-        
-        if disadvantages and len(disadvantages) >= 2:
-            return disadvantages
+    sentiment_words = sentiment_data.get('sentiment_words', {})
+    disadvantages = []
     
-    # Fallback disadvantages
-    return [
-        "Price concerns mentioned by some users",
-        "Minor functionality issues reported",
-        "Mixed satisfaction levels in reviews"
-    ]
+    # Find disadvantages based on negative sentiment words
+    for word, count in sentiment_words.items():
+        if word in disadvantage_patterns and count > 0:
+            disadvantages.append(disadvantage_patterns[word])
+    
+    # Add generic disadvantages if specific ones not found
+    if len(disadvantages) < 3:
+        generic_disadvantages = [
+            "Price concerns mentioned by some users",
+            "Minor functionality issues reported",
+            "Mixed satisfaction levels in reviews",
+            "Some usability challenges noted",
+            "Individual preferences may vary",
+            "Limited features mentioned by users"
+        ]
+        disadvantages.extend(generic_disadvantages)
+    
+    return disadvantages[:3]
 
 def analyze_reviews_definitively(reviews: list):
-    """Ultra-optimized analysis pipeline with structured outputs."""
+    """Ultra-optimized analysis pipeline with keyword-based processing."""
     if not reviews:
         return {
             "summary": "No review content found.",
@@ -279,33 +447,45 @@ def analyze_reviews_definitively(reviews: list):
         }
 
     original_count = len(reviews)
-    # Aggressive optimization: limit to 20 snippets max
-    reviews = smart_snippet_selection(reviews, max_snippets=20)
-    log.info(f"Speed-optimized: {original_count} → {len(reviews)} snippets")
+    # Aggressive optimization: limit to 30 snippets max
+    reviews = smart_snippet_selection(reviews, max_snippets=30)
+    log.info(f"Keyword-optimized: {original_count} → {len(reviews)} snippets")
 
-    # Parallel processing of different components
-    sentiment_data = quick_sentiment_analysis(reviews)
-    key_topics = extract_key_phrases_fast(reviews)
+    # Use keyword-based analysis instead of AI models
+    sentiment_data = keyword_based_sentiment_analysis(reviews)
+    key_topics = extract_keyword_based_topics(reviews)
     
-    # Generate verdict based on sentiment ratio
+    # Generate verdict based on sentiment ratio and total score
     total_sentiment = sentiment_data["positive"] + sentiment_data["negative"]
     positive_percentage = (sentiment_data["positive"] / total_sentiment * 100) if total_sentiment > 0 else 50
+    total_score = sentiment_data.get("total_score", 0)
     
-    if positive_percentage >= 70: verdict = "Good Buy"
-    elif positive_percentage >= 45: verdict = "Consider Alternatives"
-    elif positive_percentage >= 30: verdict = "Mixed Opinions"
-    else: verdict = "Not Recommended"
+    # More nuanced verdict calculation
+    if positive_percentage >= 75 and total_score > 5: 
+        verdict = "Good Buy"
+    elif positive_percentage >= 60 and total_score > 0: 
+        verdict = "Consider Alternatives"
+    elif positive_percentage >= 35: 
+        verdict = "Mixed Opinions"
+    else: 
+        verdict = "Not Recommended"
 
-    # Generate structured content
-    summary = generate_structured_summary(reviews)
-    advantages = extract_structured_advantages(reviews)
-    disadvantages = extract_structured_disadvantages(reviews)
+    # Generate keyword-based content
+    summary = generate_keyword_based_summary(reviews, sentiment_data)
+    advantages = extract_keyword_based_advantages(reviews, sentiment_data)
+    disadvantages = extract_keyword_based_disadvantages(reviews, sentiment_data)
     
-    log.info(f"Structured analysis complete. Verdict: {verdict}")
+    log.info(f"Keyword-based analysis complete. Verdict: {verdict}")
 
     return {
         "summary": summary,
-        "sentiment": sentiment_data,
+        "sentiment": {
+            "positive": sentiment_data["positive"], 
+            "negative": sentiment_data["negative"],
+            "positive_display": sentiment_data.get("positive_display", f"{sentiment_data['positive']}%"),
+            "negative_display": sentiment_data.get("negative_display", f"{sentiment_data['negative']}%"),
+            "total_reviews": sentiment_data.get("total_reviews", len(reviews))
+        },
         "verdict": verdict,
         "advantages": advantages,
         "disadvantages": disadvantages,
@@ -351,7 +531,7 @@ def generate_clear_recommendation(analysis1: dict, analysis2: dict) -> str:
     else:
         # Close comparison - provide nuanced recommendation
         if analysis1['verdict'] == analysis2['verdict']:
-            return f"**Similar Options:** Both products are comparable. Choose {product1_name} for [specific use case] or {product2_name} based on personal preference and availability."
+            return f"**Similar Options:** Both products are comparable. Choose {product1_name} for specific use cases or {product2_name} based on personal preference and availability."
         else:
             better_verdict = analysis1 if calculate_product_score(analysis1) >= calculate_product_score(analysis2) else analysis2
             return f"**Slight Edge:** {better_verdict['product_name']} with {better_verdict['verdict'].lower()} rating, though both options are viable depending on your specific needs."
@@ -392,16 +572,78 @@ def detect_product_category(product_name: str) -> str:
     """Detect product category for suggestions."""
     name_lower = product_name.lower()
     
+    # Electronics
     if any(word in name_lower for word in ['iphone', 'galaxy', 'pixel', 'phone', 'smartphone']):
         return 'phone'
-    elif any(word in name_lower for word in ['macbook', 'laptop', 'notebook', 'thinkpad']):
+    elif any(word in name_lower for word in ['macbook', 'laptop', 'notebook', 'thinkpad', 'computer']):
         return 'laptop'
     elif any(word in name_lower for word in ['ipad', 'tablet', 'surface']):
         return 'tablet'
-    elif any(word in name_lower for word in ['watch', 'smartwatch']):
+    elif any(word in name_lower for word in ['watch', 'smartwatch', 'fitbit']):
         return 'smartwatch'
-    elif any(word in name_lower for word in ['headphones', 'earbuds', 'airpods']):
+    elif any(word in name_lower for word in ['headphones', 'earbuds', 'airpods', 'speaker', 'audio']):
         return 'audio'
+    elif any(word in name_lower for word in ['tv', 'television', 'monitor', 'display']):
+        return 'display'
+    elif any(word in name_lower for word in ['camera', 'lens', 'dslr', 'gopro']):
+        return 'camera'
+    
+    # Fashion & Clothing
+    elif any(word in name_lower for word in ['dress', 'gown', 'frock', 'sundress', 'maxi dress']):
+        return 'dress'
+    elif any(word in name_lower for word in ['shirt', 'blouse', 'top', 'tshirt', 't-shirt', 'polo']):
+        return 'clothing'
+    elif any(word in name_lower for word in ['jeans', 'pants', 'trousers', 'shorts', 'leggings']):
+        return 'clothing'
+    elif any(word in name_lower for word in ['shoes', 'sneakers', 'boots', 'sandals', 'heels', 'footwear']):
+        return 'footwear'
+    elif any(word in name_lower for word in ['jacket', 'coat', 'hoodie', 'sweater', 'cardigan']):
+        return 'clothing'
+    elif any(word in name_lower for word in ['bag', 'purse', 'backpack', 'handbag', 'wallet']):
+        return 'accessories'
+    
+    # Home & Kitchen
+    elif any(word in name_lower for word in ['mattress', 'pillow', 'bedsheet', 'blanket', 'bed']):
+        return 'home'
+    elif any(word in name_lower for word in ['microwave', 'oven', 'refrigerator', 'blender', 'toaster']):
+        return 'appliances'
+    elif any(word in name_lower for word in ['sofa', 'chair', 'table', 'desk', 'furniture']):
+        return 'furniture'
+    
+    # Beauty & Personal Care
+    elif any(word in name_lower for word in ['lipstick', 'makeup', 'foundation', 'mascara', 'cosmetics']):
+        return 'beauty'
+    elif any(word in name_lower for word in ['shampoo', 'conditioner', 'cream', 'lotion', 'skincare']):
+        return 'beauty'
+    
+    # Health & Personal Care
+    elif any(word in name_lower for word in ['condom', 'contraceptive', 'lubricant', 'pregnancy test']):
+        return 'health'
+    elif any(word in name_lower for word in ['vitamin', 'supplement', 'medicine', 'medication', 'pills']):
+        return 'health'
+    elif any(word in name_lower for word in ['toothbrush', 'toothpaste', 'mouthwash', 'dental']):
+        return 'health'
+    elif any(word in name_lower for word in ['soap', 'sanitizer', 'deodorant', 'perfume']):
+        return 'personal_care'
+    
+    # Sports & Fitness
+    elif any(word in name_lower for word in ['gym', 'fitness', 'yoga', 'exercise', 'workout', 'sports']):
+        return 'fitness'
+    
+    # Books & Media
+    elif any(word in name_lower for word in ['book', 'novel', 'textbook', 'kindle', 'ebook']):
+        return 'books'
+    elif any(word in name_lower for word in ['game', 'gaming', 'xbox', 'playstation', 'nintendo']):
+        return 'gaming'
+    
+    # Automotive
+    elif any(word in name_lower for word in ['car', 'vehicle', 'auto', 'tire', 'automotive']):
+        return 'automotive'
+    
+    # Food & Beverages
+    elif any(word in name_lower for word in ['coffee', 'tea', 'wine', 'beer', 'food', 'snack']):
+        return 'food'
+    
     else:
         return 'general'
 
