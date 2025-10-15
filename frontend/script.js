@@ -315,14 +315,10 @@ document.addEventListener('DOMContentLoaded', () => {
             `<li><span class="sentiment-indicator ${r.sentiment}"></span><p>${r.text}</p><span class="sentiment-label ${r.sentiment}">${r.sentiment}</span></li>`
         ).join('') || '<li>No reviews found.</li>';
 
-        // This new version removes the theory cards and focuses on results.
+        // This new version REMOVES the word cloud card from the HTML.
         container.innerHTML = `
             <div class="panel-header"><h3>${productName}</h3></div>
 
-            <div class="concept-card">
-                <h4><i data-lucide="cloud"></i> Review Word Cloud</h4>
-                <canvas id="nlp-wordcloud-${id_prefix}" height="150"></canvas>
-            </div>
             <div class="concept-card">
                 <h4><i data-lucide="message-square"></i> Scraped Reviews & Sentiment</h4>
                 <ul class="reviews-list">${reviewsHtml}</ul>
@@ -352,7 +348,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         document.getElementById(`visualize-btn-${id_prefix}`).addEventListener('click', () => generateCfgTree(id_prefix, data));
         
-        ui.renderSentimentAwareWordCloud(`nlp-wordcloud-${id_prefix}`, data.key_topics);
+        // The line that rendered the word cloud has been removed.
     }
 
     async function generateCfgTree(id_prefix, data) {
