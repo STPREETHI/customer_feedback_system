@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comparison NLP Breakdown - Product Intelligence</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        .cfg-selector {
+            -webkit-appearance: none !important; appearance: none !important;
+            background-color: var(--secondary-bg-color) !important;
+            color: var(--primary-text-color) !important;
+            border: 1px solid var(--border-color) !important;
+            border-radius: 8px !important; padding: 12px 40px 12px 16px !important;
+            width: 100% !important; cursor: pointer !important; font-size: 0.9rem !important;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e") !important;
+            background-repeat: no-repeat !important; background-position: right 0.8rem center !important;
+            background-size: 1.25em 1.25em !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <i data-lucide="brain-circuit"></i>
+                <h1>Product Intelligence</h1>
+            </div>
+            <nav>
+                <a href="index.html">Dashboard</a>
+                <a href="compare.html" class="active">Compare</a>
+                <a href="nlp_concepts.html">NLP Concepts</a>
+                <button id="theme-switcher-btn" class="theme-switcher">
+                    <i data-lucide="sun"></i>
+                    <i data-lucide="moon" class="hidden"></i>
+                </button>
+            </nav>
+        </header>
+
+        <main>
+            <div id="compare-nlp-main-content">
+                <div class="analysis-panel">
+                    <div class="panel-header">
+                        <i data-lucide="git-compare-arrows"></i>
+                        <h2>Comparison NLP Breakdown</h2>
+                    </div>
+                    <p class="panel-subtitle" id="nlp-subtitle">
+                        Side-by-side linguistic analysis of the reviews for each product.
+                    </p>
+                </div>
+
+                <div class="compare-nlp-grid">
+                    <div class="product-nlp-column" id="product1-nlp-column">
+                        </div>
+                    <div class="product-nlp-column" id="product2-nlp-column">
+                        </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

@@ -15,3 +15,8 @@ requests
 selenium
 webdriver-manager
 googlesearch-python
+Flask
+Flask-Cors
+nltk
+spacy
+gunicorn

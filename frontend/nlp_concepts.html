@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NLP Concepts - Universal Product Intelligence</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        /*
+         * This style block is designed to be extremely forceful.
+         * It uses !important to override any other styles and uses hardcoded colors
+         * to ensure visibility in both light and dark themes.
+         */
+        #nlp-main-content .cfg-selector {
+            -webkit-appearance: none !important;
+            -moz-appearance: none !important;
+            appearance: none !important;
+
+            /* Default to hardcoded dark theme colors */
+            background-color: #1f2937 !important; /* Dark Grey Background */
+            color: #e5e7eb !important; /* Light Grey Text */
+            border: 1px solid #4b5563 !important; /* Medium Grey Border */
+
+            border-radius: 8px !important;
+            padding: 12px 40px 12px 16px !important;
+            width: 100% !important;
+            cursor: pointer !important;
+            font-size: 0.9rem !important;
+            font-family: 'Inter', sans-serif !important;
+
+            /* Custom arrow with a light color for dark mode */
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%239ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e") !important;
+            background-repeat: no-repeat !important;
+            background-position: right 0.8rem center !important;
+            background-size: 1.25em 1.25em !important;
+            transition: none !important; /* Disable transitions to prevent conflicts */
+        }
+
+        /* Override with light theme colors ONLY if the body has data-theme="light" */
+        body[data-theme="light"] #nlp-main-content .cfg-selector {
+            background-color: #ffffff !important; /* White Background */
+            color: #111827 !important; /* Dark Grey Text */
+            border: 1px solid #d1d5db !important; /* Light Grey Border */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <i data-lucide="brain-circuit"></i>
+                <h1>Product Intelligence</h1>
+            </div>
+            <nav>
+                <a href="index.html">Dashboard</a>
+                <a href="compare.html">Compare</a>
+                <a href="nlp_concepts.html" class="active">NLP Concepts</a>
+                <button id="theme-switcher-btn" class="theme-switcher">
+                    <i data-lucide="sun"></i>
+                    <i data-lucide="moon" class="hidden"></i>
+                </button>
+            </nav>
+        </header>
+
+        <main>
+            <div id="nlp-main-content">
+                <div class="analysis-panel">
+                    <div class="panel-header">
+                        <i data-lucide="book-open"></i>
+                        <h2>Dynamic NLP Concepts for <span id="product-name-placeholder" style="color: var(--accent-color);">Your Product</span></h2>
+                    </div>
+                    <p class="panel-subtitle" id="nlp-subtitle">
+                        The following examples are generated dynamically from the reviews of the product you just analyzed.
+                    </p>
+                </div>
+
+                <div class="results-grid" id="nlp-concepts-container">
+                    </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
