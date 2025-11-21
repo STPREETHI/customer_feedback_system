@@ -2,6 +2,13 @@ Universal Product Intelligence Engine
 This is a complete, end-to-end system for analyzing customer feedback and product reputation from the general internet. Instead of relying on a single, fragile e-commerce site scraper, this application performs a general web search for any given product, aggregates reviews and opinions from multiple sources, and uses a powerful AI pipeline to deliver a comprehensive analysis.
 
 This final version features a dynamic, NLP-based topic extraction engine that can understand and analyze reviews for any product category, from electronics to carrots.
+View APP UI
+<img width="1893" height="919" alt="image" src="https://github.com/user-attachments/assets/f84cc6a1-bdd1-44fa-9714-570565b87314" />
+<img width="1919" height="910" alt="image" src="https://github.com/user-attachments/assets/52682477-5353-4f5f-b4d5-178fd4e5704b" />
+<img width="1807" height="901" alt="image" src="https://github.com/user-attachments/assets/802a7cac-bb32-48c6-9163-360f67b4d998" />
+
+
+
 
 🚀 Final Setup and Running Instructions
 Follow these steps to get the application running.
