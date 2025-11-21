@@ -49,3 +49,4 @@ This starts the main "brain" of your application.
 In the same terminal, run:
 
 flask --app backend/app run
+[![Readme Card](https://github-readme-stats.vercel.app/api/pin/?username=STPREETHI&repo=customer_feedback_system)](https://github.com/STPREETHI/customer_feedback_system)
